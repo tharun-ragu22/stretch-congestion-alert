@@ -1,5 +1,7 @@
 import React from "react";
 import ConnectionPool from "@/db";
+import MapWrapper from "./MapWrapper";
+
 
 interface DashboardProps {
   params: {
@@ -54,6 +56,7 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
           })}
         </tbody>
       </table>
+      <MapWrapper initialCenter={[37.7749, -122.4194]} initialZoom={13}/>
     </div>
   );
 };
