@@ -6,12 +6,6 @@ import React from 'react';
 // --- Type Definitions ---
 type LatLon = [number, number];
 
-interface Intersection {
-  id: number;
-  latitude: number;
-  longitude: number;
-  name: string;
-}
 
 interface MapWrapperProps {
 //   intersections: Intersection[]; 
