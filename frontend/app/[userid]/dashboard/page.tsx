@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import ConnectionPool from "@/db";
 
 interface DashboardProps {
@@ -13,7 +13,7 @@ interface Point {
 }
 
 interface PointRow {
-  beginpoint : Point;
+  beginpoint: Point;
   endpoint: Point;
 }
 
@@ -27,8 +27,6 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
   );
   console.log(test.rows);
 
-  
-
   return (
     <div>
       Current user: {userid}
@@ -41,17 +39,19 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
         </thead>
         <tbody>
           {test.rows.map((points: PointRow) => {
-            console.log(points)
-            const {beginpoint, endpoint} = points;
+            console.log(points);
+            const { beginpoint, endpoint } = points;
             return (
-            <tr>
-              <td>
-                {beginpoint.x},{beginpoint.y}
-              </td>
-              <td>
-                {endpoint.x},{endpoint.y}
-              </td>
-            </tr>)})}
+              <tr>
+                <td>
+                  {beginpoint.x},{beginpoint.y}
+                </td>
+                <td>
+                  {endpoint.x},{endpoint.y}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
