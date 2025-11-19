@@ -1,22 +1,12 @@
 import React from "react";
 import ConnectionPool from "@/db";
 import MapWrapper from "./MapWrapper";
-
+import { GPSPointRow } from "@/app/DataTypes";
 
 interface DashboardProps {
   params: {
     userid: string;
   };
-}
-
-interface Point {
-  x: string;
-  y: string;
-}
-
-interface PointRow {
-  beginpoint: Point;
-  endpoint: Point;
 }
 
 const UserDashboardPage: React.FC<DashboardProps> = async ({
@@ -28,6 +18,16 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
     `SELECT beginpoint, endpoint FROM intersections where userid = '${userid}';`
   );
   console.log(test.rows);
+  const testRows : GPSPointRow[] = test.rows;
+
+  let centerX = 0;
+  let centerY = 0;
+  for (let i = 0; i < testRows.length; i++){
+    centerX += testRows[i].beginpoint.x + testRows[i].endpoint.x;
+    centerY += testRows[i].beginpoint.y + testRows[i].endpoint.y;
+  }
+  centerX /= 2*testRows.length;
+  centerY /= 2*testRows.length;
 
   return (
     <div>
@@ -40,7 +40,7 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
           </tr>
         </thead>
         <tbody>
-          {test.rows.map((points: PointRow) => {
+          {test.rows.map((points: GPSPointRow) => {
             console.log(points);
             const { beginpoint, endpoint } = points;
             return (
@@ -56,7 +56,7 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
           })}
         </tbody>
       </table>
-      <MapWrapper initialCenter={[37.7749, -122.4194]} initialZoom={13}/>
+      <MapWrapper initialCenter={[centerX, centerY]} initialZoom={12} />
     </div>
   );
 };
