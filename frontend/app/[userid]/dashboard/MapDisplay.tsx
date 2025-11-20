@@ -1,8 +1,8 @@
 import "@tomtom-international/web-sdk-maps/dist/maps.css";
-import * as ttmaps from "@tomtom-international/web-sdk-maps";
+import tt, * as ttmaps from "@tomtom-international/web-sdk-maps";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { GPSPointRow } from "@/app/DataTypes";
+import { GPSPoint, GPSPointRow } from "@/app/DataTypes";
 
 // client-injected env var (must be prefixed with NEXT_PUBLIC_ to be available in client code)
 const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? null;
@@ -22,13 +22,13 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   initialCenter,
   initialZoom,
   intersections,
-  apiKey
+  apiKey,
 }) => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
   const [map, setMap] = useState<ttmaps.Map | null>(null);
   const [currId, setCurrId] = useState(4);
-  const idRef = useRef(4)
+  const idRef = useRef(4);
 
   const getSnapFunction = async (gpsPointRow: GPSPointRow) => {
     const apiUrl = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${apiKey}`;
@@ -75,7 +75,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         });
       })
       .catch((err) => console.log(err));
-    
   };
 
   useEffect(() => {
@@ -83,10 +82,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       return;
     }
     let createdMap = ttmaps.map({
-      key: "70J6CF7zlPcjhpv5FVjI1hvvVDSNML9p",
+      key: apiKey,
       container: mapElement.current,
       center: initialCenter,
       zoom: mapZoom,
+    });
+
+    createdMap.on("click", function (e) {
+      var marker = new tt.Marker().setLngLat(e.lngLat).addTo(createdMap);
     });
 
     setMap(createdMap);
