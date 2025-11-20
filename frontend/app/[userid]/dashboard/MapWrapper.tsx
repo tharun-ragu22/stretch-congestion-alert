@@ -1,5 +1,6 @@
 "use client"; 
 
+import { GPSPointRow } from '@/app/DataTypes';
 import dynamic from 'next/dynamic';
 import React from 'react';
 
@@ -8,7 +9,7 @@ type LatLon = [number, number];
 
 
 interface MapWrapperProps {
-//   intersections: Intersection[]; 
+  intersections: GPSPointRow[]; 
   initialCenter: LatLon;
   initialZoom: number;
 }
