@@ -3,7 +3,7 @@
 import { GPSPointRow } from '@/app/DataTypes';
 import tt from '@tomtom-international/web-sdk-maps';
 import dynamic from 'next/dynamic';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 // --- Type Definitions ---
 type LatLon = [number, number];
@@ -31,22 +31,32 @@ const DynamicMapDisplay = dynamic(() => import("./MapDisplay"), {
 
 // MapWrapper component simply passes props to the dynamically loaded component.
 const MapWrapper: React.FC<MapWrapperProps> = (props) => {
-  const [points, setPoints] = useState<tt.Marker[]>([]);
-  const handleMapClick = (lngLat : tt.Marker) => {
-    setPoints(prevPoints => [...prevPoints, lngLat]);
-  }
-  return (
-    <div>
-      <DynamicMapDisplay {...props} onMapClick={handleMapClick} />
-      {/* Display the state data managed by the parent */}
-       <h2>Selected Ponts:</h2>
+  const [points, setPoints] = useState<tt.LngLat[]>([]);
+  const [pointDiv, setPointsDiv] = useState(<div></div>)
+  const handleMapClick = (lngLat: tt.LngLat) => {
+    setPoints((prevPoints) => [...prevPoints, lngLat].slice(-2));
+    
+  };
+
+  useEffect(()=> {
+    console.log("points:", points);
+    setPointsDiv(
+      <div>
+        <h2>Selected Ponts:</h2>
       <ul>
         {points && points.map((p) => (
           <li>
-            Lat: {p.getLngLat().lat}, Lng: {p.getLngLat().lng}
+            Lat: {p.lat}, Lng: {p.lng}
           </li>
         ))}
       </ul>
+      </div>
+    )
+  }, [points])
+  return (
+    <div>
+      <DynamicMapDisplay {...props} onMapClick={handleMapClick} />
+      {pointDiv}
     </div>
   );
 };

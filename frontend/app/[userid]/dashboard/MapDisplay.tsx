@@ -117,14 +117,10 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         const newMarkersState = newMarkers.slice(-2);
         console.log("current markers", newMarkersState);
 
-        // onMapClick(e.lngLat);
-
         // 4. Return the new state array
         return newMarkersState;
       });
-
-      // You should remove the original console.log here as it will always be stale
-      // console.log("selected markers: ", markers); // <-- REMOVE THIS LINE
+      onMapClick(e.lngLat);  
     });
 
     setMap(createdMap);
