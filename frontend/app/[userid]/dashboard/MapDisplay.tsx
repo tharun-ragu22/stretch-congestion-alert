@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { GPSPointRow } from "@/app/DataTypes";
 
+// client-injected env var (must be prefixed with NEXT_PUBLIC_ to be available in client code)
+const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? null;
+
 // --- Type Definitions ---
 type LatLon = [number, number];
 
@@ -11,6 +14,7 @@ interface MapDisplayProps {
   intersections: GPSPointRow[];
   initialCenter: LatLon;
   initialZoom: number;
+  apiKey: string;
 }
 
 // --- MapDisplay Component ---
@@ -18,6 +22,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   initialCenter,
   initialZoom,
   intersections,
+  apiKey
 }) => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
@@ -26,14 +31,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const idRef = useRef(4)
 
   const getSnapFunction = async (gpsPointRow: GPSPointRow) => {
-    const apiUrl = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=70J6CF7zlPcjhpv5FVjI1hvvVDSNML9p`;
+    const apiUrl = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${apiKey}`;
     const layerId = idRef.current++;
     console.log("getting:", apiUrl);
     await axios
       .get(apiUrl)
       .then((res) => {
         console.log("res data:", res.data);
-        res.data.route.forEach((item : any) => {
+        res.data.route.forEach((item: any) => {
           console.log("item:", item);
           if (!map) {
             return;

@@ -56,7 +56,7 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
           })}
         </tbody>
       </table>
-      <MapWrapper initialCenter={[centerY, centerX]} initialZoom={12} intersections={testRows}/>
+      <MapWrapper initialCenter={[centerY, centerX]} initialZoom={12} intersections={testRows} apiKey={process.env.TOMTOM_API_KEY!}/>
     </div>
   );
 };

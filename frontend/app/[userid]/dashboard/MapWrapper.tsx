@@ -12,6 +12,7 @@ interface MapWrapperProps {
   intersections: GPSPointRow[]; 
   initialCenter: LatLon;
   initialZoom: number;
+  apiKey: string;
 }
 
 // Dynamically import the MapDisplay component.
