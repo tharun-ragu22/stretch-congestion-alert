@@ -33,7 +33,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       .get(apiUrl)
       .then((res) => {
         console.log("res data:", res.data);
-        res.data.route.forEach((item) => {
+        res.data.route.forEach((item : any) => {
           console.log("item:", item);
           if (!map) {
             return;
@@ -48,9 +48,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
                 features: [
                   {
                     type: "Feature",
+                    properties: {},
                     geometry: {
                       type: "LineString",
-                      properties: {},
                       coordinates: item.geometry.coordinates,
                     },
                   },
