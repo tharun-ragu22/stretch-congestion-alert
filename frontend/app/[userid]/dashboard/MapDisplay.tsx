@@ -29,6 +29,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
   const [map, setMap] = useState<ttmaps.Map | null>(null);
+  const [markers, setMarkers] = useState<tt.Marker[]>([]);
   const [currId, setCurrId] = useState(4);
   const idRef = useRef(4);
 
@@ -46,7 +47,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
             return;
           }
           map.addLayer({
-            id: layerId.toString(),
+            id: "jermainecole" + layerId.toString(),
             type: "line",
             source: {
               type: "geojson",
@@ -91,10 +92,40 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     });
 
     createdMap.on("click", function (e) {
-      var marker = new tt.Marker().setLngLat(e.lngLat).addTo(createdMap);
-      onMapClick(e.lngLat);
+      var marker = new tt.Marker().setLngLat(e.lngLat);
+
+      // Use the functional update form and perform all logic here
+      setMarkers((prevMarkers) => {
+        // 1. Calculate the new state value
+        const newMarkers = [...prevMarkers, marker];
+
+        // 2. LOGGING FIX: Log the value you just calculated
+        console.log("selected markers (inside callback): ", newMarkers);
+
+        // 3. LOGIC FIX: Use the calculated length (newMarkers.length) for conditionals
+        if (newMarkers.length <= 2) {
+          console.log("2 or less markers selected");
+          marker.addTo(createdMap);
+        } else {
+          console.log("more than 2 markers selected, removing oldest");
+          // To remove the oldest, you remove the first element of the PREVIOUS array
+          // This ensures we always only show the 2 most recent markers
+          prevMarkers.at(-2)!.remove();
+          marker.addTo(createdMap);
+        }
+
+        const newMarkersState = newMarkers.slice(-2);
+        console.log("current markers", newMarkersState);
+
+        // onMapClick(e.lngLat);
+
+        // 4. Return the new state array
+        return newMarkersState;
+      });
+
+      // You should remove the original console.log here as it will always be stale
+      // console.log("selected markers: ", markers); // <-- REMOVE THIS LINE
     });
-    
 
     setMap(createdMap);
     return () => createdMap.remove();

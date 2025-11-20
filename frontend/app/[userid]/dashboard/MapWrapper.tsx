@@ -31,19 +31,19 @@ const DynamicMapDisplay = dynamic(() => import("./MapDisplay"), {
 
 // MapWrapper component simply passes props to the dynamically loaded component.
 const MapWrapper: React.FC<MapWrapperProps> = (props) => {
-  const [points, setPoints] = useState<tt.LngLat[]>([]);
-  const handleMapClick = (lngLat : tt.LngLat) => {
+  const [points, setPoints] = useState<tt.Marker[]>([]);
+  const handleMapClick = (lngLat : tt.Marker) => {
     setPoints(prevPoints => [...prevPoints, lngLat]);
   }
   return (
     <div>
       <DynamicMapDisplay {...props} onMapClick={handleMapClick} />
       {/* Display the state data managed by the parent */}
-      <h2>Selected Points:</h2>
+       <h2>Selected Ponts:</h2>
       <ul>
-        {points.map((p : tt.LngLat) => (
+        {points && points.map((p) => (
           <li>
-            Lat: {p.lat.toFixed(4)}, Lon: {p.lng.toFixed(4)}
+            Lat: {p.getLngLat().lat}, Lng: {p.getLngLat().lng}
           </li>
         ))}
       </ul>
