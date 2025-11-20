@@ -15,6 +15,7 @@ interface MapDisplayProps {
   initialCenter: LatLon;
   initialZoom: number;
   apiKey: string;
+  onMapClick: Function;
 }
 
 // --- MapDisplay Component ---
@@ -23,6 +24,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   initialZoom,
   intersections,
   apiKey,
+  onMapClick
 }) => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
@@ -90,7 +92,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
     createdMap.on("click", function (e) {
       var marker = new tt.Marker().setLngLat(e.lngLat).addTo(createdMap);
+      onMapClick(e.lngLat);
     });
+    
 
     setMap(createdMap);
     return () => createdMap.remove();
