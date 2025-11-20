@@ -1,77 +1,115 @@
-"use client";
+import "@tomtom-international/web-sdk-maps/dist/maps.css";
+import * as ttmaps from "@tomtom-international/web-sdk-maps";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { GPSPointRow } from "@/app/DataTypes";
 
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS directly here
-import L from 'leaflet';
+// client-injected env var (must be prefixed with NEXT_PUBLIC_ to be available in client code)
+const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? null;
 
 // --- Type Definitions ---
 type LatLon = [number, number];
 
-interface Intersection {
-  id: number;
-  latitude: number;
-  longitude: number;
-  name: string;
-}
-
 interface MapDisplayProps {
-//   intersections: Intersection[]; 
+  intersections: GPSPointRow[];
   initialCenter: LatLon;
   initialZoom: number;
+  apiKey: string;
 }
 
-// --- Custom Marker Icon Setup ---
-// This prevents the default marker icon from failing to load due to missing paths.
-// We use the icon paths provided by unpkg, which are standard for leaflet setup.
-const customIcon = new L.Icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-});
-
-
 // --- MapDisplay Component ---
-const MapDisplay: React.FC<MapDisplayProps> = ({ initialCenter, initialZoom }) => {
+const MapDisplay: React.FC<MapDisplayProps> = ({
+  initialCenter,
+  initialZoom,
+  intersections,
+  apiKey
+}) => {
+  const mapElement = useRef<HTMLDivElement | null>(null);
+  const [mapZoom, setMapZoom] = useState(initialZoom);
+  const [map, setMap] = useState<ttmaps.Map | null>(null);
+  const [currId, setCurrId] = useState(4);
+  const idRef = useRef(4)
 
-    return (
-        <div className="rounded-xl overflow-hidden shadow-lg border-2 border-indigo-200">
-            <MapContainer 
-                center={initialCenter} 
-                zoom={initialZoom} 
-                scrollWheelZoom={true}
-                // Setting height is essential for Leaflet to initialize properly
-                style={{ height: '500px', width: '100%' }} 
-                className="z-0" 
-            >
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
+  const getSnapFunction = async (gpsPointRow: GPSPointRow) => {
+    const apiUrl = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${apiKey}`;
+    const layerId = idRef.current++;
+    console.log("getting:", apiUrl);
+    await axios
+      .get(apiUrl)
+      .then((res) => {
+        console.log("res data:", res.data);
+        res.data.route.forEach((item: any) => {
+          console.log("item:", item);
+          if (!map) {
+            return;
+          }
+          map.addLayer({
+            id: layerId.toString(),
+            type: "line",
+            source: {
+              type: "geojson",
+              data: {
+                type: "FeatureCollection",
+                features: [
+                  {
+                    type: "Feature",
+                    properties: {},
+                    geometry: {
+                      type: "LineString",
+                      coordinates: item.geometry.coordinates,
+                    },
+                  },
+                ],
+              },
+            },
+            layout: {
+              "line-cap": "round",
+              "line-join": "round",
+            },
+            paint: {
+              "line-color": "#ff0000",
+              "line-width": 2,
+            },
+          });
+          setCurrId((id) => id + 1);
+        });
+      })
+      .catch((err) => console.log(err));
+    
+  };
 
-                {/* {intersections.map((intersection) => (
-                    <Marker 
-                        key={intersection.id} // Ensures every item in the list has a unique key!
-                        position={[intersection.latitude, intersection.longitude]} 
-                        icon={customIcon}
-                    >
-                        <Popup>
-                            <div className="font-sans">
-                                <p className="font-semibold text-indigo-700 mb-1">{intersection.name}</p>
-                                <p className="text-xs text-gray-500">
-                                    Lat: {intersection.latitude.toFixed(6)}, Lng: {intersection.longitude.toFixed(6)}
-                                </p>
-                            </div>
-                        </Popup>
-                    </Marker>
-                ))} */}
-            </MapContainer>
-        </div>
-    );
+  useEffect(() => {
+    if (!mapElement.current) {
+      return;
+    }
+    let createdMap = ttmaps.map({
+      key: "70J6CF7zlPcjhpv5FVjI1hvvVDSNML9p",
+      container: mapElement.current,
+      center: initialCenter,
+      zoom: mapZoom,
+    });
+
+    setMap(createdMap);
+    return () => createdMap.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    (async () => {
+      for (const gpsRow of intersections) {
+        await getSnapFunction(gpsRow);
+      }
+    })();
+  }, [map, intersections]);
+
+  return (
+    <div className="App">
+      <div ref={mapElement} className="mapDiv h-120 w-full"></div>
+    </div>
+  );
 };
 
 export default MapDisplay;

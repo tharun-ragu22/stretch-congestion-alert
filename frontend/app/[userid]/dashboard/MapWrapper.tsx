@@ -1,22 +1,18 @@
 "use client"; 
 
+import { GPSPointRow } from '@/app/DataTypes';
 import dynamic from 'next/dynamic';
 import React from 'react';
 
 // --- Type Definitions ---
 type LatLon = [number, number];
 
-interface Intersection {
-  id: number;
-  latitude: number;
-  longitude: number;
-  name: string;
-}
 
 interface MapWrapperProps {
-//   intersections: Intersection[]; 
+  intersections: GPSPointRow[]; 
   initialCenter: LatLon;
   initialZoom: number;
+  apiKey: string;
 }
 
 // Dynamically import the MapDisplay component.
