@@ -38,10 +38,19 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
     
   };
 
+  const postData = {
+    title: "My New Blog Post",
+    body: "This is the content of my new blog post.",
+    userId: 1,
+  };
+
   const okClick = async () => {
-    const response = await fetch(`/api/john_doe/intersections`);
+    const response = await fetch(`/api/john_doe/intersections`, {
+      method: "POST",
+      body: JSON.stringify(points),
+    });
     console.log(response.text);
-  }
+  };
 
   const fetchData = useCallback( async ()=> {
     // 1. Construct the dynamic API URL
