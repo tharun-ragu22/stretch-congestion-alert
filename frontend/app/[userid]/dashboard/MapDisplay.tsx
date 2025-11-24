@@ -36,13 +36,10 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const getSnapFunction = async (gpsPointRow: GPSPointRow) => {
     const apiUrl = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${apiKey}`;
     const layerId = idRef.current++;
-    console.log("getting:", apiUrl);
     await axios
       .get(apiUrl)
       .then((res) => {
-        console.log("res data:", res.data);
         res.data.route.forEach((item: any) => {
-          console.log("item:", item);
           if (!map) {
             return;
           }

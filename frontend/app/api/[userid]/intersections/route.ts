@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import ConnectionPool from "@/db";
+import { GPSPointRow } from "@/app/DataTypes";
+import axios from "axios";
 
 // Define the expected runtime structure of the parameters
 interface RouteParams {
@@ -13,7 +15,7 @@ async function queryPostgres(sql: string, params: any[] = []) {
     console.log(`[POSTGRES_QUERY] User: ${userId}, SQL: ${sql}`);
     const res = await ConnectionPool.query(sql, params);
 
-    return res.rows[0];
+    return res;
   } catch (err: unknown) {
     console.error(`error executing ${sql} with params ${params}`);
     throw err;
@@ -35,11 +37,29 @@ export async function GET(
   try {
     // Mock SQL Query:
     const sql =
-      "SELECT id, lat, lng, created_at FROM intersections WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5";
+      "SELECT beginpoint, endpoint FROM intersections WHERE userid = $1";
     const result = await queryPostgres(sql, [userid]);
+    console.log("result from get", result);
+
+    
+    const promises = result.rows.map(async (gpsPointRow: GPSPointRow) => {
+      const TOMTOM_API_URL = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${process.env.TOMTOM_API_KEY}`;
+      console.log("getting tontom: ", TOMTOM_API_URL);
+      try{
+        const res = await axios.get(TOMTOM_API_URL);
+        return res.data.route;
+        }
+    catch (err){
+        return null;
+    }
+    });
+
+    const intersections = await  Promise.all(promises);
+
+    console.log("created intersections", intersections);
 
     // Use standard Web API Response.json()
-    return Response.json(result.rows);
+    return Response.json(intersections);
   } catch (error) {
     console.error(`Error fetching intersections for user ${userid}:`, error);
 
@@ -84,8 +104,6 @@ export async function POST(
     body.forEach((row: tt.LngLat) => {
       points.push(row);
     });
-
-    // Mock SQL Query:
     const sql =
       "INSERT INTO intersections (userid, beginpoint, endpoint) VALUES ($1, POINT($3, $2), POINT($5, $4))";
     await insertIntersection(sql, [userid, ...points]);

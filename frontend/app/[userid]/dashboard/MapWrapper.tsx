@@ -13,6 +13,7 @@ interface MapWrapperProps {
   initialCenter: LatLon;
   initialZoom: number;
   apiKey: string;
+  userid: string;
 }
 
 // Dynamically import the MapDisplay component.
@@ -32,29 +33,22 @@ const DynamicMapDisplay = dynamic(() => import("./MapDisplay"), {
 // MapWrapper component simply passes props to the dynamically loaded component.
 const MapWrapper: React.FC<MapWrapperProps> = (props) => {
   const [points, setPoints] = useState<tt.LngLat[]>([]);
-  const [pointDiv, setPointsDiv] = useState(<div></div>)
+  const [pointDiv, setPointsDiv] = useState(<div></div>);
   const handleMapClick = (lngLat: tt.LngLat) => {
     setPoints((prevPoints) => [...prevPoints, lngLat].slice(-2));
-    
-  };
-
-  const postData = {
-    title: "My New Blog Post",
-    body: "This is the content of my new blog post.",
-    userId: 1,
   };
 
   const okClick = async () => {
-    const response = await fetch(`/api/john_doe/intersections`, {
+    const response = await fetch(`/api/${props.userid}/intersections`, {
       method: "POST",
       body: JSON.stringify(points),
     });
     console.log(response.text);
   };
 
-  const fetchData = useCallback( async ()=> {
+  const fetchData = useCallback(async () => {
     // 1. Construct the dynamic API URL
-    const apiUrl = `/api/john_doe/intersections`;
+    const apiUrl = `/api/${props.userid}/intersections`;
     console.log(`Attempting to fetch data from: ${apiUrl}`);
 
     try {
@@ -63,44 +57,44 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
       if (!response.ok) {
         // Handle HTTP error statuses (400s, 500s)
         const errorBody = await response.json();
-        throw new Error(`HTTP error ${response.status}: ${errorBody.error || 'Unknown error'}`);
+        throw new Error(
+          `HTTP error ${response.status}: ${errorBody.error || "Unknown error"}`
+        );
       }
 
       // 2. Parse the JSON response
       const result = await response.json();
-      
+
       // 3. Update state with fetched data
-      
-      console.log('Data fetched successfully:', result);
 
+      console.log("Data fetched successfully:", result);
     } catch (err) {
-      console.error('Fetch operation failed:', err);
-      
-      
-    } 
-  }, [])
+      console.error("Fetch operation failed:", err);
+    }
+  }, []);
 
-  useEffect(()=> {
+  useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  useEffect(()=> {
+  useEffect(() => {
     console.log("points:", points);
-    
+
     setPointsDiv(
       <div>
         <h2>Selected Ponts:</h2>
-      <ul>
-        {points && points.map((p) => (
-          <li>
-            Lat: {p.lat}, Lng: {p.lng}
-          </li>
-        ))}
-      </ul>
-      {points.length === 2 && <button onClick={okClick}>Ok</button>}
+        <ul>
+          {points &&
+            points.map((p) => (
+              <li>
+                Lat: {p.lat}, Lng: {p.lng}
+              </li>
+            ))}
+        </ul>
+        {points.length === 2 && <button onClick={okClick}>Ok</button>}
       </div>
-    )
-  }, [points])
+    );
+  }, [points]);
   return (
     <div>
       <DynamicMapDisplay {...props} onMapClick={handleMapClick} />
