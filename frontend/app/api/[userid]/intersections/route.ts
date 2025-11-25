@@ -34,6 +34,12 @@ export async function GET(
   // Cast the unknown 'params' object to the actual expected type for runtime use
   const { userid } = (await context.params) as RouteParams;
 
+  const delay = (ms: number): Promise<void> => {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+};
+
   try {
     // Mock SQL Query:
     const sql =
@@ -57,6 +63,7 @@ export async function GET(
       });
       const batchResults = await Promise.all(batchPromises);
       intersections.push(...batchResults);
+      await delay(500);
     }
 
     console.log("created intersections", intersections);

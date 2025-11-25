@@ -45,6 +45,11 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
       body: JSON.stringify(points),
     });
     console.log(response.text);
+    if (response.ok) {
+      console.log("click worked");
+      await fetchIntersections();
+      setPoints([]);
+    }
   };
 
   const fetchIntersections = useCallback(async () => {

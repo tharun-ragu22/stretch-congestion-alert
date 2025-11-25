@@ -22,12 +22,14 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
 
   let centerX = 0;
   let centerY = 0;
-  for (let i = 0; i < testRows.length; i++) {
-    centerX += testRows[i].beginpoint.x + testRows[i].endpoint.x;
-    centerY += testRows[i].beginpoint.y + testRows[i].endpoint.y;
+  if (testRows.length > 0) {
+    for (let i = 0; i < testRows.length; i++) {
+      centerX += testRows[i].beginpoint.x + testRows[i].endpoint.x;
+      centerY += testRows[i].beginpoint.y + testRows[i].endpoint.y;
+    }
+    centerX /= 2 * testRows.length;
+    centerY /= 2 * testRows.length;
   }
-  centerX /= 2 * testRows.length;
-  centerY /= 2 * testRows.length;
 
   return (
     <div>
