@@ -40,21 +40,24 @@ export async function GET(
       "SELECT beginpoint, endpoint FROM intersections WHERE userid = $1";
     const result = await queryPostgres(sql, [userid]);
     console.log("result from get", result);
-
-    
-    const promises = result.rows.map(async (gpsPointRow: GPSPointRow) => {
-      const TOMTOM_API_URL = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${process.env.TOMTOM_API_KEY}`;
-      console.log("getting tontom: ", TOMTOM_API_URL);
-      try{
-        const res = await axios.get(TOMTOM_API_URL);
-        return res.data.route;
+    const intersections: any[] = [];
+    const BATCH_SIZE = 2;
+    for (let i = 0; i < result.rows.length; i += BATCH_SIZE) {
+      const batch = result.rows.slice(i, i + BATCH_SIZE);
+      const batchPromises = batch.map(async (gpsPointRow: GPSPointRow) => {
+        const TOMTOM_API_URL = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${process.env.TOMTOM_API_KEY}`;
+        console.log("getting tontom: ", TOMTOM_API_URL);
+        try {
+          const res = await axios.get(TOMTOM_API_URL);
+          return res.data.route;
+        } catch (err) {
+          console.error("couldn't make request", gpsPointRow);
+          return null;
         }
-    catch (err){
-        return null;
+      });
+      const batchResults = await Promise.all(batchPromises);
+      intersections.push(...batchResults);
     }
-    });
-
-    const intersections = await  Promise.all(promises);
 
     console.log("created intersections", intersections);
 

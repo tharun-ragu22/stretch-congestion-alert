@@ -9,7 +9,6 @@ import React, { useState, useEffect, useCallback } from "react";
 type LatLon = [number, number];
 
 interface MapWrapperProps {
-  intersections: GPSPointRow[];
   initialCenter: LatLon;
   initialZoom: number;
   apiKey: string;
@@ -33,7 +32,9 @@ const DynamicMapDisplay = dynamic(() => import("./MapDisplay"), {
 // MapWrapper component simply passes props to the dynamically loaded component.
 const MapWrapper: React.FC<MapWrapperProps> = (props) => {
   const [points, setPoints] = useState<tt.LngLat[]>([]);
+  const [intersections, setIntersections] = useState<Object[]>([]);
   const [pointDiv, setPointsDiv] = useState(<div></div>);
+  const [mapDiv, setMapDiv] = useState(<div></div>);
   const handleMapClick = (lngLat: tt.LngLat) => {
     setPoints((prevPoints) => [...prevPoints, lngLat].slice(-2));
   };
@@ -46,7 +47,7 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
     console.log(response.text);
   };
 
-  const fetchData = useCallback(async () => {
+  const fetchIntersections = useCallback(async () => {
     // 1. Construct the dynamic API URL
     const apiUrl = `/api/${props.userid}/intersections`;
     console.log(`Attempting to fetch data from: ${apiUrl}`);
@@ -68,21 +69,32 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
       // 3. Update state with fetched data
 
       console.log("Data fetched successfully:", result);
+      setIntersections(result);
     } catch (err) {
       console.error("Fetch operation failed:", err);
     }
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchIntersections();
+  }, [fetchIntersections]);
+
+  useEffect(()=>{
+    setMapDiv(
+      <DynamicMapDisplay
+        {...props}
+        onMapClick={handleMapClick}
+        intersections={intersections}
+      />
+    )
+  },[intersections])
 
   useEffect(() => {
     console.log("points:", points);
 
     setPointsDiv(
       <div>
-        <h2>Selected Ponts:</h2>
+        <h2>Selected Points:</h2>
         <ul>
           {points &&
             points.map((p) => (
@@ -97,7 +109,7 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
   }, [points]);
   return (
     <div>
-      <DynamicMapDisplay {...props} onMapClick={handleMapClick} />
+      {mapDiv}
       {pointDiv}
     </div>
   );

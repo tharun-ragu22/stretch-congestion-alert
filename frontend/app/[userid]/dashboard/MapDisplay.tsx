@@ -11,7 +11,7 @@ const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? null;
 type LatLon = [number, number];
 
 interface MapDisplayProps {
-  intersections: GPSPointRow[];
+  intersections: any[];
   initialCenter: LatLon;
   initialZoom: number;
   apiKey: string;
@@ -24,7 +24,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   initialZoom,
   intersections,
   apiKey,
-  onMapClick
+  onMapClick,
 }) => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
@@ -33,48 +33,49 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const [currId, setCurrId] = useState(4);
   const idRef = useRef(4);
 
-  const getSnapFunction = async (gpsPointRow: GPSPointRow) => {
-    const apiUrl = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${apiKey}`;
+  const getSnapFunction = async (roadSnap: any[]) => {
+    console.log("curr road snap", roadSnap);
+    if (!roadSnap){
+        return;
+    }
     const layerId = idRef.current++;
-    await axios
-      .get(apiUrl)
-      .then((res) => {
-        res.data.route.forEach((item: any) => {
-          if (!map) {
-            return;
-          }
-          map.addLayer({
-            id: "jermainecole" + layerId.toString(),
-            type: "line",
-            source: {
-              type: "geojson",
-              data: {
-                type: "FeatureCollection",
-                features: [
-                  {
-                    type: "Feature",
-                    properties: {},
-                    geometry: {
-                      type: "LineString",
-                      coordinates: item.geometry.coordinates,
-                    },
-                  },
-                ],
+    if (!map) {
+      return;
+    }
+    roadSnap.forEach((item) => {
+      if (!item) {
+        return;
+      }
+      map.addLayer({
+        id: "jermainecole" + layerId.toString(),
+        type: "line",
+        source: {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "LineString",
+                  coordinates: item.geometry.coordinates,
+                },
               },
-            },
-            layout: {
-              "line-cap": "round",
-              "line-join": "round",
-            },
-            paint: {
-              "line-color": "#ff0000",
-              "line-width": 2,
-            },
-          });
-          setCurrId((id) => id + 1);
-        });
-      })
-      .catch((err) => console.log(err));
+            ],
+          },
+        },
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": "#ff0000",
+          "line-width": 2,
+        },
+      });
+      setCurrId((id) => id + 1);
+    });
   };
 
   useEffect(() => {
@@ -117,7 +118,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         // 4. Return the new state array
         return newMarkersState;
       });
-      onMapClick(e.lngLat);  
+      onMapClick(e.lngLat);
     });
 
     setMap(createdMap);
