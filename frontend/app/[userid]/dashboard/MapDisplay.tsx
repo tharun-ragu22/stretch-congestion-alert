@@ -1,11 +1,6 @@
 import "@tomtom-international/web-sdk-maps/dist/maps.css";
 import tt, * as ttmaps from "@tomtom-international/web-sdk-maps";
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { GPSPoint, GPSPointRow } from "@/app/DataTypes";
-
-// client-injected env var (must be prefixed with NEXT_PUBLIC_ to be available in client code)
-const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? null;
 
 // --- Type Definitions ---
 type LatLon = [number, number];
@@ -35,10 +30,10 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
   const getSnapFunction = async (roadSnap: any[]) => {
     console.log("curr road snap", roadSnap);
-    if (!roadSnap){
-        return;
+    if (!roadSnap) {
+      return;
     }
-    const layerId = idRef.current++;
+    let layerId = idRef.current++;
     if (!map) {
       return;
     }
@@ -74,7 +69,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
           "line-width": 2,
         },
       });
-      setCurrId((id) => id + 1);
+      layerId = idRef.current++;
     });
   };
 
@@ -122,8 +117,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     });
 
     setMap(createdMap);
-    return () => createdMap.remove();
-  }, []);
+    return () => {
+      console.log("Cleaning up map instance...");
+      markers.forEach((m) => m.remove());
+      if (createdMap) {
+        createdMap.remove();
+      }
+    };
+  }, [mapElement]);
 
   useEffect(() => {
     if (!map) {
