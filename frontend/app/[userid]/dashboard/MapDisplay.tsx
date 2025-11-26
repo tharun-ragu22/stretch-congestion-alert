@@ -1,6 +1,7 @@
 import "@tomtom-international/web-sdk-maps/dist/maps.css";
 import tt, * as ttmaps from "@tomtom-international/web-sdk-maps";
 import { useState, useEffect, useRef } from "react";
+import { create } from "domain";
 
 // --- Type Definitions ---
 type LatLon = [number, number];
@@ -84,39 +85,42 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       zoom: mapZoom,
     });
 
-    createdMap.on("click", function (e) {
-      var marker = new tt.Marker().setLngLat(e.lngLat);
+    createdMap.once("load", () => {
+      createdMap.on("click", function (e) {
+        var marker = new tt.Marker().setLngLat(e.lngLat);
 
-      // Use the functional update form and perform all logic here
-      setMarkers((prevMarkers) => {
-        // 1. Calculate the new state value
-        const newMarkers = [...prevMarkers, marker];
+        // Use the functional update form and perform all logic here
+        setMarkers((prevMarkers) => {
+          // 1. Calculate the new state value
+          const newMarkers = [...prevMarkers, marker];
 
-        // 2. LOGGING FIX: Log the value you just calculated
-        console.log("selected markers (inside callback): ", newMarkers);
+          // 2. LOGGING FIX: Log the value you just calculated
+          console.log("selected markers (inside callback): ", newMarkers);
 
-        // 3. LOGIC FIX: Use the calculated length (newMarkers.length) for conditionals
-        if (newMarkers.length <= 2) {
-          console.log("2 or less markers selected");
-          marker.addTo(createdMap);
-        } else {
-          console.log("more than 2 markers selected, removing oldest");
-          // To remove the oldest, you remove the first element of the PREVIOUS array
-          // This ensures we always only show the 2 most recent markers
-          prevMarkers.at(-2)!.remove();
-          marker.addTo(createdMap);
-        }
+          // 3. LOGIC FIX: Use the calculated length (newMarkers.length) for conditionals
+          if (newMarkers.length <= 2) {
+            console.log("2 or less markers selected");
+            marker.addTo(createdMap);
+          } else {
+            console.log("more than 2 markers selected, removing oldest");
+            // To remove the oldest, you remove the first element of the PREVIOUS array
+            // This ensures we always only show the 2 most recent markers
+            prevMarkers.at(-2)!.remove();
+            marker.addTo(createdMap);
+          }
 
-        const newMarkersState = newMarkers.slice(-2);
-        console.log("current markers", newMarkersState);
+          const newMarkersState = newMarkers.slice(-2);
+          console.log("current markers", newMarkersState);
+          
 
-        // 4. Return the new state array
-        return newMarkersState;
+          // 4. Return the new state array
+          return newMarkersState;
+        });
+        onMapClick(e.lngLat);
       });
-      onMapClick(e.lngLat);
+      setMap(createdMap)
     });
 
-    setMap(createdMap);
     return () => {
       console.log("Cleaning up map instance...");
       markers.forEach((m) => m.remove());
