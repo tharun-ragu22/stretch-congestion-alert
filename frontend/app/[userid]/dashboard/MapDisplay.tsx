@@ -1,20 +1,17 @@
 import "@tomtom-international/web-sdk-maps/dist/maps.css";
-import * as ttmaps from "@tomtom-international/web-sdk-maps";
+import tt, * as ttmaps from "@tomtom-international/web-sdk-maps";
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { GPSPointRow } from "@/app/DataTypes";
-
-// client-injected env var (must be prefixed with NEXT_PUBLIC_ to be available in client code)
-const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? null;
+import { create } from "domain";
 
 // --- Type Definitions ---
 type LatLon = [number, number];
 
 interface MapDisplayProps {
-  intersections: GPSPointRow[];
+  intersections: any[];
   initialCenter: LatLon;
   initialZoom: number;
   apiKey: string;
+  onMapClick: Function;
 }
 
 // --- MapDisplay Component ---
@@ -22,60 +19,59 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   initialCenter,
   initialZoom,
   intersections,
-  apiKey
+  apiKey,
+  onMapClick,
 }) => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
   const [map, setMap] = useState<ttmaps.Map | null>(null);
+  const [markers, setMarkers] = useState<tt.Marker[]>([]);
   const [currId, setCurrId] = useState(4);
-  const idRef = useRef(4)
+  const idRef = useRef(4);
 
-  const getSnapFunction = async (gpsPointRow: GPSPointRow) => {
-    const apiUrl = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${apiKey}`;
-    const layerId = idRef.current++;
-    console.log("getting:", apiUrl);
-    await axios
-      .get(apiUrl)
-      .then((res) => {
-        console.log("res data:", res.data);
-        res.data.route.forEach((item: any) => {
-          console.log("item:", item);
-          if (!map) {
-            return;
-          }
-          map.addLayer({
-            id: layerId.toString(),
-            type: "line",
-            source: {
-              type: "geojson",
-              data: {
-                type: "FeatureCollection",
-                features: [
-                  {
-                    type: "Feature",
-                    properties: {},
-                    geometry: {
-                      type: "LineString",
-                      coordinates: item.geometry.coordinates,
-                    },
-                  },
-                ],
+  const getSnapFunction = async (roadSnap: any[]) => {
+    console.log("curr road snap", roadSnap);
+    if (!roadSnap) {
+      return;
+    }
+    let layerId = idRef.current++;
+    if (!map) {
+      return;
+    }
+    roadSnap.forEach((item) => {
+      if (!item) {
+        return;
+      }
+      map.addLayer({
+        id: "jermainecole" + layerId.toString(),
+        type: "line",
+        source: {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "LineString",
+                  coordinates: item.geometry.coordinates,
+                },
               },
-            },
-            layout: {
-              "line-cap": "round",
-              "line-join": "round",
-            },
-            paint: {
-              "line-color": "#ff0000",
-              "line-width": 2,
-            },
-          });
-          setCurrId((id) => id + 1);
-        });
-      })
-      .catch((err) => console.log(err));
-    
+            ],
+          },
+        },
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": "#ff0000",
+          "line-width": 2,
+        },
+      });
+      layerId = idRef.current++;
+    });
   };
 
   useEffect(() => {
@@ -83,15 +79,56 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       return;
     }
     let createdMap = ttmaps.map({
-      key: "70J6CF7zlPcjhpv5FVjI1hvvVDSNML9p",
+      key: apiKey,
       container: mapElement.current,
       center: initialCenter,
       zoom: mapZoom,
     });
 
-    setMap(createdMap);
-    return () => createdMap.remove();
-  }, []);
+    createdMap.once("load", () => {
+      createdMap.on("click", function (e) {
+        var marker = new tt.Marker().setLngLat(e.lngLat);
+
+        // Use the functional update form and perform all logic here
+        setMarkers((prevMarkers) => {
+          // 1. Calculate the new state value
+          const newMarkers = [...prevMarkers, marker];
+
+          // 2. LOGGING FIX: Log the value you just calculated
+          console.log("selected markers (inside callback): ", newMarkers);
+
+          // 3. LOGIC FIX: Use the calculated length (newMarkers.length) for conditionals
+          if (newMarkers.length <= 2) {
+            console.log("2 or less markers selected");
+            marker.addTo(createdMap);
+          } else {
+            console.log("more than 2 markers selected, removing oldest");
+            // To remove the oldest, you remove the first element of the PREVIOUS array
+            // This ensures we always only show the 2 most recent markers
+            prevMarkers.at(-2)!.remove();
+            marker.addTo(createdMap);
+          }
+
+          const newMarkersState = newMarkers.slice(-2);
+          console.log("current markers", newMarkersState);
+          
+
+          // 4. Return the new state array
+          return newMarkersState;
+        });
+        onMapClick(e.lngLat);
+      });
+      setMap(createdMap)
+    });
+
+    return () => {
+      console.log("Cleaning up map instance...");
+      markers.forEach((m) => m.remove());
+      if (createdMap) {
+        createdMap.remove();
+      }
+    };
+  }, [mapElement]);
 
   useEffect(() => {
     if (!map) {
