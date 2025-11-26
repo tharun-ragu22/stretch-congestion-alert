@@ -34,30 +34,6 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
   return (
     <div>
       Current user: {userid}
-      <table>
-        <thead>
-          <tr>
-            <th>Begin</th>
-            <th>End</th>
-          </tr>
-        </thead>
-        <tbody>
-          {test.rows.map((points: GPSPointRow) => {
-            // console.log(points);
-            const { beginpoint, endpoint } = points;
-            return (
-              <tr key = {Math.random.toString()}>
-                <td>
-                  {beginpoint.x},{beginpoint.y}
-                </td>
-                <td>
-                  {endpoint.x},{endpoint.y}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
       <MapWrapper initialCenter={[centerY, centerX]} initialZoom={12} userid={userid} apiKey={process.env.TOMTOM_API_KEY!}/>
     </div>
   );
