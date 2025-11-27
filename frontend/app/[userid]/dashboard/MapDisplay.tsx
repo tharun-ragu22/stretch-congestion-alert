@@ -26,7 +26,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const [mapZoom, setMapZoom] = useState(initialZoom);
   const [map, setMap] = useState<ttmaps.Map | null>(null);
   const [markers, setMarkers] = useState<tt.Marker[]>([]);
-  const [currId, setCurrId] = useState(4);
+  const [isHovering, setIsHovering] = useState(false);
   const idRef = useRef(4);
 
   const getSnapFunction = async (roadSnap: any[]) => {
@@ -38,12 +38,17 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     if (!map) {
       return;
     }
+
     roadSnap.forEach((item) => {
       if (!item) {
         return;
       }
+
+      const segmentSpeed = item.properties.speedProfile.value;
+
+      const idString = "id_" + layerId.toString();
       map.addLayer({
-        id: "jermainecole" + layerId.toString(),
+        id: idString,
         type: "line",
         source: {
           type: "geojson",
@@ -67,8 +72,52 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         },
         paint: {
           "line-color": "#ff0000",
-          "line-width": 2,
+          "line-width": 4,
         },
+      });
+
+      // Reuse a single popup instance for hover
+      const hoverPopup: tt.Popup = new tt.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        offset: 15,
+      });
+      let activePopup = null;
+
+      // --- A. Hover Logic (Non-persistent tooltip) ---
+      map.on("mousemove", idString, (e) => {
+        // Check if we already have a persistent popup from a click
+        if (activePopup && (activePopup as any).isOpen()) return;
+
+        setIsHovering(true);
+        map.getCanvas().style.cursor = "pointer";
+        const coords = e.lngLat;
+
+        const content = `
+            <div class="font-bold">${item.properties.speedProfile.value} km/h</div>
+            
+        `;
+
+        hoverPopup.setLngLat(coords).setHTML(content).addTo(map);
+      });
+
+      // Remove hover popup and reset cursor when mouse leaves the line layer
+      map.on("mouseleave", idString, () => {
+        setIsHovering(false);
+        map.getCanvas().style.cursor = "";
+        // Only close the hover popup if no persistent popup is active
+        if (!activePopup || !(activePopup as any).isOpen()) {
+          hoverPopup.remove();
+        }
+      });
+
+      // Reset cursor and close hover popup when mouse leaves the entire map
+      map.on("mouseout", () => {
+        setIsHovering(false);
+        map.getCanvas().style.cursor = "";
+        if (!activePopup || !(activePopup as any).isOpen()) {
+          hoverPopup.remove();
+        }
       });
       layerId = idRef.current++;
     });
@@ -111,14 +160,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
           const newMarkersState = newMarkers.slice(-2);
           console.log("current markers", newMarkersState);
-          
 
           // 4. Return the new state array
           return newMarkersState;
         });
         onMapClick(e.lngLat);
       });
-      setMap(createdMap)
+
+      setMap(createdMap);
     });
 
     return () => {
