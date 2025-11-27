@@ -51,7 +51,7 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
 
   const fetchIntersections = useCallback(async () => {
     // 1. Construct the dynamic API URL
-    const apiUrl = `/api/${props.userid}/intersections`;
+    const apiUrl = `/api/users/${props.userid}/intersections`;
     console.log(`Attempting to fetch data from: ${apiUrl}`);
 
     try {
