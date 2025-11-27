@@ -1,25 +1,11 @@
 import { NextRequest } from "next/server";
-import ConnectionPool from "@/db";
+import { queryPostgres } from "@/app/api/helpers";
 import { GPSPointRow } from "@/app/DataTypes";
 import axios from "axios";
 
 // Define the expected runtime structure of the parameters
 interface RouteParams {
   userid: string;
-}
-
-// Mock function to simulate a PostgreSQL query (as requested)
-async function queryPostgres(sql: string, params: any[] = []) {
-  try {
-    const userId = params[0];
-    console.log(`[POSTGRES_QUERY] User: ${userId}, SQL: ${sql}`);
-    const res = await ConnectionPool.query(sql, params);
-
-    return res;
-  } catch (err: unknown) {
-    console.error(`error executing ${sql} with params ${params}`);
-    throw err;
-  }
 }
 
 // -----------------------------------------------------------------------------------
@@ -35,10 +21,10 @@ export async function GET(
   const { userid } = (await context.params) as RouteParams;
 
   const delay = (ms: number): Promise<void> => {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
-};
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  };
 
   try {
     // Mock SQL Query:
@@ -89,7 +75,7 @@ async function insertIntersection(sql: string, params: any[]) {
   const endpoint: number[] = Object.values(params[2]);
   console.log(user, beginpoint, endpoint);
 
-  await ConnectionPool.query(sql, [user, ...beginpoint, ...endpoint]);
+  await queryPostgres(sql, [user, ...beginpoint, ...endpoint]);
 }
 
 // -----------------------------------------------------------------------------------
@@ -100,8 +86,6 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<unknown> }
 ): Promise<Response> {
-  console.log("ya dad", await context.params);
-  console.log("help");
   // Cast the unknown 'params' object to the actual expected type for runtime use
   const { userid } = (await context.params) as RouteParams;
   console.log(`POST request received for user: ${userid}`);
