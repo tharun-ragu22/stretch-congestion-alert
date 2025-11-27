@@ -13,9 +13,11 @@ export async function GET(
   // console.log(context.params)
 
   const { userid } = await context.params;
-  const sql = `SELECT * FROM users where userid = $1`;
+  const { searchParams } = new URL(request.url);
+  const password = searchParams.get("password");
+  const sql = `SELECT * FROM users where userid = $1 and password = $2`;
 
-  const result = await queryPostgres(sql, [userid]);
+  const result = await queryPostgres(sql, [userid, password]);
   if (result.rows[0].rowCount !== 0) {
     return Response.json({
       status: 200,

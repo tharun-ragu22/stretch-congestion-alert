@@ -25,9 +25,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
 
-            const response = await fetch(`/api/users/${userid}/`)
-            console.log(await response.json())
-            // demo credentials: user@example.com / password
+            const response = await fetch(`/api/users/${userid}?password=${password}`)
             if (response.ok) {
                 router.push(`/${userid}/dashboard`); // on success redirect
             } else {
