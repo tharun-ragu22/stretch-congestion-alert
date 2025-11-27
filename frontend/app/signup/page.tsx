@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 
-export default function LoginPage() {
+export default function SigninPage() {
     const router = useRouter();
     const [userid, setUserid] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -16,8 +17,8 @@ export default function LoginPage() {
         e.preventDefault();
         setError(null);
 
-        if (!userid || !password) {
-            setError("Please enter username and password.");
+        if (!userid || !email || !password) {
+            setError("Please enter username and email and password.");
             return;
         }
         
@@ -25,7 +26,16 @@ export default function LoginPage() {
         setLoading(true);
         try {
 
-            const response = await fetch(`/api/users/${userid}?password=${password}`)
+            const response = await fetch(`/api/users/${userid}`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        userid: userid,
+                        email: email,
+                        password: password
+                    })
+                }
+            )
             if (response.ok) {
                 router.push(`/${userid}/dashboard`); // on success redirect
             } else {
@@ -40,7 +50,7 @@ export default function LoginPage() {
     return (
         <main style={styles.page}>
             <form onSubmit={handleSubmit} style={styles.card} aria-labelledby="login-heading">
-                <h1 id="login-heading" style={styles.title}>Sign in</h1>
+                <h1 id="login-heading" style={styles.title}>Sign up</h1>
 
                 {error && <div role="alert" style={styles.error}>{error}</div>}
 
@@ -56,6 +66,17 @@ export default function LoginPage() {
                 </label>
 
                 <label style={styles.label}>
+                    Email
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        style={styles.input}
+                        required
+                    />
+                </label>  
+
+                <label style={styles.label}>
                     Password
                     <input
                         type="password"
@@ -69,7 +90,7 @@ export default function LoginPage() {
                 </label>
 
                 <button type="submit" style={{ ...styles.button, opacity: loading ? 0.7 : 1 }} disabled={loading}>
-                    {loading ? "Signing in..." : "Sign in"}
+                    {loading ? "Creating account..." : "Create account"}
                 </button>
 
                 <p style={styles.hint}>

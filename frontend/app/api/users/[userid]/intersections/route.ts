@@ -86,8 +86,6 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<unknown> }
 ): Promise<Response> {
-  console.log("ya dad", await context.params);
-  console.log("help");
   // Cast the unknown 'params' object to the actual expected type for runtime use
   const { userid } = (await context.params) as RouteParams;
   console.log(`POST request received for user: ${userid}`);
