@@ -45,6 +45,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       }
 
       const segmentSpeed = item.properties.speedProfile.value;
+      const speedLimit = item.properties.speedLimits.value;
+
+      const color = (segmentSpeed / speedLimit > 0.9) ? "#008000" : ( segmentSpeed / speedLimit > 0.5 ? "#ff9900" : "#ff0000")
 
       const idString = "id_" + layerId.toString();
       map.addLayer({
@@ -71,7 +74,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
           "line-join": "round",
         },
         paint: {
-          "line-color": "#ff0000",
+          "line-color": color,
           "line-width": 4,
         },
       });
