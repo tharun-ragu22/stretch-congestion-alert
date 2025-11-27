@@ -24,19 +24,17 @@ export default function LoginPage() {
 
         setLoading(true);
         try {
-            // fake auth delay
-            // await new Promise((r) => setTimeout(r, 700));
 
             const response = await fetch(`/api/users/${userid}/`)
             console.log(await response.json())
             // demo credentials: user@example.com / password
             if (response.ok) {
                 router.push(`/${userid}/dashboard`); // on success redirect
-                // const result = await fetch(`/api/users/${userid}/`)
-                // console.log(await result.json())
             } else {
                 setError("Invalid email or password.");
             }
+        } catch {
+            setError("Invalid email or password.");
         } finally {
             setLoading(false);
         }

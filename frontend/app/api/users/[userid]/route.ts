@@ -13,12 +13,10 @@ export async function GET(
   // console.log(context.params)
 
   const { userid } = await context.params;
-  console.log("received userid ", userid);
   const sql = `SELECT * FROM users where userid = $1`;
 
   const result = await queryPostgres(sql, [userid]);
-  console.log("result from user get:", result.rows[0]);
-  if (result.rows.length !== 0) {
+  if (result.rows[0].rowCount !== 0) {
     return Response.json({
       status: 200,
     });
