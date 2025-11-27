@@ -37,7 +37,7 @@ export async function GET(
     for (let i = 0; i < result.rows.length; i += BATCH_SIZE) {
       const batch = result.rows.slice(i, i + BATCH_SIZE);
       const batchPromises = batch.map(async (gpsPointRow: GPSPointRow) => {
-        const TOMTOM_API_URL = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={projectedPoints{type,geometry{type,coordinates},properties{routeIndex}},route{type,geometry{type,coordinates},properties{id,speedRestrictions{maximumSpeed{value,unit}}}}}&key=${process.env.TOMTOM_API_KEY}`;
+        const TOMTOM_API_URL = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={route{type,geometry{type,coordinates},properties{speedProfile{value,unit},speedLimits{value,unit}}}}&key=${process.env.TOMTOM_API_KEY}`;
         console.log("getting tontom: ", TOMTOM_API_URL);
         try {
           const res = await axios.get(TOMTOM_API_URL);

@@ -36,7 +36,7 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
 
   const okClick = async () => {
     setIsAddPointsLoading(true);
-    const response = await fetch(`/api/${props.userid}/intersections`, {
+    const response = await fetch(`/api/users/${props.userid}/intersections`, {
       method: "POST",
       body: JSON.stringify(points),
     });
