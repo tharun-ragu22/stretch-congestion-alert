@@ -15,11 +15,14 @@ interface MapWrapperProps {
 }
 
 const loadingComponent = (
-  <div className="flex justify-center items-center h-[500px] w-full bg-gray-100 rounded-xl shadow-lg p-6">
-    <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-blue-500 border-gray-300"></div>
-    <p className="mt-4 text-xl font-semibold text-gray-700">
-      Loading Map Display...
-    </p>
+  <div className="flex items-center justify-center h-64 w-full bg-white rounded-2xl shadow-lg p-6">
+    <div className="flex items-center gap-4">
+      <div className="animate-spin rounded-full h-10 w-10 border-4 border-t-indigo-600 border-gray-200"></div>
+      <div>
+        <p className="text-lg font-semibold text-gray-900">Loading Map</p>
+        <p className="text-sm text-gray-500">Fetching tiles and routes…</p>
+      </div>
+    </div>
   </div>
 );
 
@@ -82,18 +85,69 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
   }, [fetchIntersections]);
 
   useEffect(() => {
-    setMapDiv(
-      isAddPointsLoading ? (
-        loadingComponent
-      ) : (
+    const mapPanel = isAddPointsLoading ? (
+      loadingComponent
+    ) : (
+      <div className="h-[640px] w-full">
         <MapDisplay
           {...props}
           onMapClick={handleMapClick}
           intersections={intersections}
         />
-      )
+      </div>
     );
-  }, [intersections, isAddPointsLoading]);
+
+    const layout = (
+      <div className="max-w-7xl mx-auto py-8 px-4 font-sans">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow p-4">
+            {mapPanel}
+          </div>
+          <aside className="lg:col-span-1 bg-white rounded-2xl shadow p-6 flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Selected Points
+            </h3>
+            <div className="flex-1 overflow-auto text-sm text-gray-700">
+              <ul className="space-y-2">
+                {points.length === 0 && (
+                  <li className="text-gray-400">No points selected</li>
+                )}
+                {points.map((p, i) => (
+                  <li key={i} className="px-3 py-2 bg-gray-50 rounded">
+                    <div className="text-sm text-gray-800">
+                      Lat: {p.lat.toFixed(6)}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Lng: {p.lng.toFixed(6)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mt-4">
+              {points.length === 2 ? (
+                <button
+                  onClick={okClick}
+                  className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium"
+                >
+                  Confirm & Save
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full h-10 bg-gray-100 text-gray-400 rounded-md"
+                >
+                  Select 2 points to enable
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
+      </div>
+    );
+
+    setMapDiv(layout);
+  }, [intersections, isAddPointsLoading, points]);
 
   useEffect(() => {
     console.log("points:", points);
@@ -116,7 +170,6 @@ const MapWrapper: React.FC<MapWrapperProps> = (props) => {
   return (
     <div>
       {isAddPointsLoading ? loadingComponent : mapDiv}
-      {pointDiv}
     </div>
   );
 };
