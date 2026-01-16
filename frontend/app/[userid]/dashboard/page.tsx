@@ -22,6 +22,7 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
 
   let centerX = 0;
   let centerY = 0;
+  let initialScale = 12;
   if (testRows.length > 0) {
     for (let i = 0; i < testRows.length; i++) {
       centerX += testRows[i].beginpoint.x + testRows[i].endpoint.x;
@@ -29,6 +30,8 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
     }
     centerX /= 2 * testRows.length;
     centerY /= 2 * testRows.length;
+  } else{
+    initialScale = 1;
   }
 
   return (
@@ -50,7 +53,7 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
         </div>
       </div>
 
-      <MapWrapper initialCenter={[centerY, centerX]} initialZoom={12} userid={userid} apiKey={process.env.TOMTOM_API_KEY!} />
+      <MapWrapper initialCenter={[centerY, centerX]} initialZoom={initialScale} userid={userid} apiKey={process.env.TOMTOM_API_KEY!} />
     </div>
   );
 };
