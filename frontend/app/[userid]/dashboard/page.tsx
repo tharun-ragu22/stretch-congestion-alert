@@ -74,8 +74,40 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
           Intersections: <span className="font-medium text-gray-800">{intersectionRows.length}</span>
         </div>
       </div>
+      <div className="bg-white/90 p-6 rounded-lg shadow-md border border-gray-200 max-w-7xl backdrop-blur-sm">
+        <h2 className="text-lg font-bold text-gray-800 mb-4">Instructions</h2>
+        <ul className="space-y-4">
+          <li className="flex gap-3">
+            <span className="font-bold text-blue-600">1.</span>
+            <p className="text-gray-700 text-sm">
+              <strong>Zoom</strong> into the city you're in (e.g. Toronto, SF)
+            </p>
+          </li>
+          <li className="flex gap-3">
+            <span className="font-bold text-blue-600">2.</span>
+            <p className="text-gray-700 text-sm">
+              <strong>Click</strong> on 2 points on the map to define the stretch.
+            </p>
+          </li>
+          <li className="flex gap-3">
+            <span className="font-bold text-blue-600">3.</span>
+            <p className="text-gray-700 text-sm">
+              Hit <strong>Submit</strong> to save the intersection.
+            </p>
+          </li>
+          <li className="flex gap-3">
+            <span className="font-bold text-blue-600">4.</span>
+            <p className="text-gray-700 text-sm">
+              <strong>Refresh</strong> the page to see the road stretch and congestion level reflected on the map.
+            </p>
+          </li>
+        </ul>
+      </div>
 
       <MapWrapper initialCenter={initialCenter} initialZoom={initialScale} userid={userid} apiKey={process.env.TOMTOM_API_KEY!} />
+
+      
+
     </div>
   );
 };
