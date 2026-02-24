@@ -27,18 +27,34 @@ export async function GET(
   };
 
   try {
-    // Mock SQL Query:
-    const sql =
-      "SELECT beginpoint, endpoint FROM intersections WHERE userid = $1";
+ 
+    const sql = `
+      SELECT 
+        ST_AsGeoJSON(beginpoint)::jsonb as beginpoint, 
+        ST_AsGeoJSON(endpoint)::jsonb as endpoint 
+      FROM intersections 
+      WHERE userid = $1
+    `;
+
     const result = await queryPostgres(sql, [userid]);
     console.log("result from get", result);
     const intersections: any[] = [];
     const BATCH_SIZE = 2;
     for (let i = 0; i < result.rows.length; i += BATCH_SIZE) {
       const batch = result.rows.slice(i, i + BATCH_SIZE);
-      const batchPromises = batch.map(async (gpsPointRow: GPSPointRow) => {
-        const TOMTOM_API_URL = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${gpsPointRow.beginpoint.y},${gpsPointRow.beginpoint.x};${gpsPointRow.endpoint.y},${gpsPointRow.endpoint.x}&fields={route{type,geometry{type,coordinates},properties{speedProfile{value,unit},speedLimits{value,unit}}}}&key=${process.env.TOMTOM_API_KEY}`;
-        console.log("getting tontom: ", TOMTOM_API_URL);
+      const batchPromises = batch.map(async (gpsPointRow: any) => {
+        
+        // 2. Extract coordinates from the GeoJSON structure
+        // PostGIS GeoJSON format is [longitude, latitude]
+        const bLng = gpsPointRow.beginpoint.coordinates[0];
+        const bLat = gpsPointRow.beginpoint.coordinates[1];
+        const eLng = gpsPointRow.endpoint.coordinates[0];
+        const eLat = gpsPointRow.endpoint.coordinates[1];
+
+        // TomTom usually expects "latitude,longitude" in the URL string
+        const TOMTOM_API_URL = `https://api.tomtom.com/snap-to-roads/1/snap-to-roads?points=${bLat},${bLng};${eLat},${eLng}&fields={route{type,geometry{type,coordinates},properties{speedProfile{value,unit},speedLimits{value,unit}}}}&key=${process.env.TOMTOM_API_KEY}`;
+        
+        
         try {
           const res = await axios.get(TOMTOM_API_URL);
           return res.data.route;
@@ -48,7 +64,7 @@ export async function GET(
         }
       });
       const batchResults = await Promise.all(batchPromises);
-      intersections.push(...batchResults);
+      intersections.push(...batchResults.filter(r => r !== null));
       await delay(500);
     }
 
@@ -99,7 +115,7 @@ export async function POST(
       points.push(row);
     });
     const sql =
-      "INSERT INTO intersections (userid, beginpoint, endpoint) VALUES ($1, POINT($3, $2), POINT($5, $4))";
+      "INSERT INTO intersections (userid, beginpoint, endpoint) VALUES ($1, ST_SetSRID(ST_MakePoint($3, $2), 4326), ST_SetSRID(ST_MakePoint($5, $4), 4326));";
     await insertIntersection(sql, [userid, ...points]);
 
     return Response.json(

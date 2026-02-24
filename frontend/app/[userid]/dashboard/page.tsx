@@ -14,19 +14,29 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
 }: DashboardProps) => {
   const { userid } = await params;
 
+  const sql = `
+    SELECT 
+      ST_AsGeoJSON(beginpoint)::jsonb as beginpoint, 
+      ST_AsGeoJSON(endpoint)::jsonb as endpoint 
+    FROM intersections 
+    WHERE userid = '${userid}'
+  `;
+
+  // console.log(sql)
+
   const test = await ConnectionPool.query(
-    `SELECT beginpoint, endpoint FROM intersections where userid = '${userid}';`
+    sql
   );
-  // console.log(test.rows);
-  const testRows: GPSPointRow[] = test.rows;
+  console.log("test rows:", test.rows);
+  const testRows: any[] = test.rows;
 
   let centerX = 0;
   let centerY = 0;
   let initialScale = 12;
   if (testRows.length > 0) {
     for (let i = 0; i < testRows.length; i++) {
-      centerX += testRows[i].beginpoint.x + testRows[i].endpoint.x;
-      centerY += testRows[i].beginpoint.y + testRows[i].endpoint.y;
+      centerX += testRows[i].beginpoint.coordinates[0] + testRows[i].endpoint.coordinates[0];
+      centerY += testRows[i].beginpoint.coordinates[1] + testRows[i].endpoint.coordinates[1];
     }
     centerX /= 2 * testRows.length;
     centerY /= 2 * testRows.length;
