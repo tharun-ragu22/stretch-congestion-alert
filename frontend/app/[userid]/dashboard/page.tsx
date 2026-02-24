@@ -14,22 +14,44 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
 }: DashboardProps) => {
   const { userid } = await params;
 
-  const test = await ConnectionPool.query(
-    `SELECT beginpoint, endpoint FROM intersections where userid = '${userid}';`
-  );
-  // console.log(test.rows);
-  const testRows: GPSPointRow[] = test.rows;
+  const sql = `
+    SELECT 
+      ST_AsGeoJSON(beginpoint)::jsonb as beginpoint, 
+      ST_AsGeoJSON(endpoint)::jsonb as endpoint 
+    FROM intersections 
+    WHERE userid = '${userid}'
+  `;
 
-  let centerX = 0;
-  let centerY = 0;
-  let initialScale = 12;
-  if (testRows.length > 0) {
-    for (let i = 0; i < testRows.length; i++) {
-      centerX += testRows[i].beginpoint.x + testRows[i].endpoint.x;
-      centerY += testRows[i].beginpoint.y + testRows[i].endpoint.y;
-    }
-    centerX /= 2 * testRows.length;
-    centerY /= 2 * testRows.length;
+  // console.log(sql)
+
+  const test = await ConnectionPool.query(
+    sql
+  );
+  console.log("test rows:", test.rows);
+  const intersectionRows: any[] = test.rows;
+
+  let initialCenter: [number, number] = [0, 0];
+
+  let initialScale = 9;
+  if (intersectionRows.length > 0) {
+    let minLng = Infinity, maxLng = -Infinity;
+    let minLat = Infinity, maxLat = -Infinity;
+
+    intersectionRows.forEach(row => {
+      // Check all 4 points (begin and end) to find the edges
+      const points = [row.beginpoint.coordinates, row.endpoint.coordinates];
+      
+      points.forEach(([lng, lat]) => {
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      });
+    });
+
+    // The center is the midpoint of the bounds
+    initialCenter = [(minLat + maxLat) / 2, (minLng + maxLng) / 2];
+    
   } else{
     initialScale = 1;
   }
@@ -49,11 +71,11 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
           </div>
         </div>
         <div className="text-sm text-gray-600">
-          Intersections: <span className="font-medium text-gray-800">{testRows.length}</span>
+          Intersections: <span className="font-medium text-gray-800">{intersectionRows.length}</span>
         </div>
       </div>
 
-      <MapWrapper initialCenter={[centerY, centerX]} initialZoom={initialScale} userid={userid} apiKey={process.env.TOMTOM_API_KEY!} />
+      <MapWrapper initialCenter={initialCenter} initialZoom={initialScale} userid={userid} apiKey={process.env.TOMTOM_API_KEY!} />
     </div>
   );
 };

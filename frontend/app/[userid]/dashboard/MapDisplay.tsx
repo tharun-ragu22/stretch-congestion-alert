@@ -20,7 +20,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   initialZoom,
   intersections,
   apiKey,
-  onMapClick,
+  onMapClick
 }) => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
