@@ -30,16 +30,31 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
   console.log("test rows:", test.rows);
   const testRows: any[] = test.rows;
 
-  let centerX = 0;
-  let centerY = 0;
-  let initialScale = 12;
+  let initialCenter: [number, number] = [0, 0];
+  let bounds: [number, number, number, number] | null = null;
+
+  let initialScale = 10;
   if (testRows.length > 0) {
-    for (let i = 0; i < testRows.length; i++) {
-      centerX += testRows[i].beginpoint.coordinates[0] + testRows[i].endpoint.coordinates[0];
-      centerY += testRows[i].beginpoint.coordinates[1] + testRows[i].endpoint.coordinates[1];
-    }
-    centerX /= 2 * testRows.length;
-    centerY /= 2 * testRows.length;
+    let minLng = Infinity, maxLng = -Infinity;
+    let minLat = Infinity, maxLat = -Infinity;
+
+    testRows.forEach(row => {
+      // Check all 4 points (begin and end) to find the edges
+      const points = [row.beginpoint.coordinates, row.endpoint.coordinates];
+      
+      points.forEach(([lng, lat]) => {
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      });
+    });
+
+    // The center is the midpoint of the bounds
+    initialCenter = [(minLat + maxLat) / 2, (minLng + maxLng) / 2];
+    
+    // TomTom bounds format: [SW_lng, SW_lat, NE_lng, NE_lat]
+    bounds = [minLng, minLat, maxLng, maxLat];
   } else{
     initialScale = 1;
   }
@@ -63,7 +78,7 @@ const UserDashboardPage: React.FC<DashboardProps> = async ({
         </div>
       </div>
 
-      <MapWrapper initialCenter={[centerY, centerX]} initialZoom={initialScale} userid={userid} apiKey={process.env.TOMTOM_API_KEY!} />
+      <MapWrapper initialCenter={initialCenter} initialZoom={initialScale} userid={userid} apiKey={process.env.TOMTOM_API_KEY!} bounds={bounds} />
     </div>
   );
 };

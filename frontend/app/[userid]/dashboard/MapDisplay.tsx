@@ -12,6 +12,7 @@ interface MapDisplayProps {
   initialZoom: number;
   apiKey: string;
   onMapClick: Function;
+  bounds: [number, number, number, number] | null;
 }
 
 // --- MapDisplay Component ---
@@ -21,6 +22,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   intersections,
   apiKey,
   onMapClick,
+  bounds
 }) => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [mapZoom, setMapZoom] = useState(initialZoom);
@@ -136,6 +138,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       center: initialCenter,
       zoom: mapZoom,
     });
+
+    // // If we have bounds, tell the map to zoom to fit them
+    // if (bounds) {
+    //   createdMap.fitBounds(bounds, {
+    //     padding: 50, // Adds pixels of space around the edges so points aren't touching the bezel
+    //     linear: true
+    //   });
+    // }
 
     createdMap.once("load", () => {
       createdMap.on("click", function (e) {

@@ -12,6 +12,7 @@ interface MapWrapperProps {
   initialZoom: number;
   apiKey: string;
   userid: string;
+  bounds: [number, number, number, number] | null;
 }
 
 const loadingComponent = (
